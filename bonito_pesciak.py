@@ -71,7 +71,7 @@ class BPOperator(block_base):
         xk = x.copy()
         # NOTE: k controls the number of quadrature points, we let user
         # set that based on the fractianality, # of unknowns, mesh size
-        k = self.compute_k(beta, b.size(), self.mesh_hmin)
+        k = self.compute_k(beta, len(b), self.mesh_hmin)
 
         M = int(ceil(pi**2/(4.*beta*k**2)))  # cf Remark 3.1
         N = int(ceil(pi**2/(4*(1 - beta)*k**2)))
@@ -88,8 +88,8 @@ class BPOperator(block_base):
             # Keep track of number of iteration in inner solves
             count, xk = self.solve_shifted_problem(A, xk, b)
             iter_count += count
-            
-            x.axpy(exp(2*yl*(beta - 1.)), xk)
+
+            x += exp(2*yl*(beta - 1.))*xk
         x *= 2*k*sin(pi*beta)/pi
 
         return x, nsolves, iter_count
@@ -173,7 +173,7 @@ if __name__ == '__main__':
     
     s = 0.5
     k = 2.
-    dim = 2
+    dim = 1
 
     # -------------------------------------
     
@@ -189,7 +189,7 @@ if __name__ == '__main__':
     # NOTE: `compute_k` here controls the number of quadrature points
     # For optimal converrgence the value should be adapted on mesh resultion etc
     get_B = lambda V, bcs, s: InvFHelmholtz(V, s, bcs, compute_k=0.3,
-                                            solve_shifted_problem=amg_solve)
+                                            solve_shifted_problem=None)#amg_solve)
 
     # NOTE: `solve_shifted_problem=None`  falls back to LU
     # FIXME: preconditioned based on AMG of unshifted problem
